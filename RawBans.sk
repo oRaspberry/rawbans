@@ -1,0 +1,138 @@
+
+# Skript Addons Needed
+# sk.rayfall.net | SkRayFall
+#
+# Made by oRaspberry ( oRaspberry#4868 )
+#
+command /rawbans [<text>]:
+	aliases: rb,rawb,rbans
+	trigger:
+		if arg-1 is "permissions" or "perms":
+			send ""
+			send "&eRawBans.mute"
+			send "&eRawBans.unmute"
+			send "&eRawBans.kick"
+			send "&eRawBans.ban"
+			send "&eRawBans.unban"
+			send ""
+		if arg-1 is "reload":
+			if player is op:
+				make console execute "sk reload RawBans.sk"
+
+command /mute [<player>] [<text>]:
+	permission: RawBans.mute
+	trigger:
+		if arg-2 is not set:
+			broadcast ""
+			broadcast "&7%player% &cMuted &7%arg-1% &cFor reason: &7Spamming!"
+			broadcast ""
+			set {muted.%arg-1's uuid%} to true
+		if arg-2 is set:
+			broadcast ""
+			broadcast "&7%player% &cMuted &7%arg-1% &cFor reason: &7%arg-2%"
+			broadcast ""
+			set {muted.%arg-1's uuid%} to true
+			set {mute-reason.%arg-1's uuid%} to "%arg-2%"
+			
+			
+command /unmute [<player>]:
+	permission: RawBans.unmute
+	trigger:
+		if {muted.%arg-1's uuid%} = false:
+			send "&cTarget &7(%arg-1%) &cis not muted!"
+		else if {muted.%arg-1's uuid%} = true:
+			broadcast ""
+			broadcast "&7%player% &cUnmuted &7%arg-1%"
+			broadcast ""
+			set {muted.%arg-1's uuid%} to false
+			
+on chat:
+	if {muted.%player's uuid%} = true:
+		cancel event
+		set action bar of player to "&cYou are &4PERMANANTLY &cMuted! &7Reason: %{mute-reason.%player's uuid%}%"
+		
+command /kick [<player>] [<text>]:
+	permission: RawBans.kick
+	trigger:
+		broadcast ""
+		broadcast "&7%player% &ckicked &7%arg-1% &7Reason: &c%arg-2%"
+		broadcast ""
+		kick arg-1 due to "%arg-2%"
+		
+command /ban [<player>] [<text>]:
+	permission: RawBans.ban
+	trigger:
+		if arg-1 is not set:
+			send "&4&lRAW&c&lBANS &7» &c/ban <player> <reason>"
+		if arg-1 is set:
+			broadcast ""
+			broadcast "&7%player% &cBanned &7%arg-1% &cReason: &7%arg-2%"
+			broadcast ""
+			kick arg-1 due to "&cYou are banned! Reason:&7 %arg-2%"
+			ban arg-1 due to "&cYou are banned! Reason:&7 %arg-2%"
+
+command /unban [<offline player>]:
+	permission: RawBans.unban
+	trigger:
+		broadcast ""
+		broadcast "&7%player% &cUnbanned &7%arg-1%"
+		broadcast ""
+		unban arg-1
+		
+command /mutechat:
+	permission: RawBans.Mute.Chat
+	trigger:
+		if {mutechat} = false:
+			broadcast ""
+			broadcast "&c&lSERVER CHAT HAS BEEN MUTED BY &c%player%"
+			broadcast ""
+			set {mutechat} to true
+		else if {mutechat} = true:
+			broadcast ""
+			broadcast "&a&lSERVER CHAT HAS BEEN UNMUTED BY &a%player%"
+			broadcast ""
+			set {mutechat} to false
+
+on chat:
+	if {mutechat} = true:
+		if player is not op:
+			cancel event
+			set action bar of player to "&cServer chat is &4&lLOCKED&c!"
+		else if player is not op:
+			set action bar of player to "&aServer chat is LOCKED but, you are Staff!"
+
+on load:
+	set {mutechat} to false
+
+command /clearchat:
+	permission: RawBans.clearchat
+	trigger:
+		loop 1000 times:
+			broadcast ""
+		broadcast ""
+		broadcast "&c&lSERVER CHAT HAS BEEN CLEARED BY &c%player%"
+		broadcast ""
+
+command /warn [<player>] [<text>]:
+	permission: RawBans.warn
+	trigger:
+		if arg-1 is not set:
+			send "&4&lRAW&c&lBANS &7» &c/warn <player> <reason>"
+		broadcast ""
+		broadcast "&7%player% &cWarned &7%arg-1% &cReason: &7%arg-2%"
+		broadcast ""
+		add 1 to {warns.%player's uuid%}
+
+command /warns [<player>]:
+	permission: RawBans.warn.view
+	trigger:
+		send ""
+		send "&cPlayer &7%arg-1% &chas &4%{warns.%player's uuid%}% &cWarns!"
+		send ""
+		
+every 1 tick:
+	loop all players:
+		if {warns.%loop-player's uuid%} is 5:
+			set {mute.%loop-player's uuid%} to true
+			add 1 to {warns.%loop-player's uuid%}
+			wait 5 minutes
